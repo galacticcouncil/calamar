@@ -10,6 +10,7 @@ import { getExtrinsic } from "../services/extrinsicsService";
 
 import Spinner from "./Spinner";
 import SearchByNameResults from "./SearchByNameResults";
+import { decodeAddress } from "../utils/formatAddress";
 
 const StyledSearchBox = styled.div`
   padding: 32px 0;
@@ -33,6 +34,7 @@ const Search = (props: SearchProps) => {
   const [showResultsByName, setShowResultsByName] = useState<boolean>(false);
 
   const searchSingle = useCallback(async (query: string) => {
+    query = query.replace(/\s/g, "");
     if (query.startsWith("0x")) {
       const extrinsicByHash = await getExtrinsic({ hash_eq: query });
 
@@ -68,6 +70,11 @@ const Search = (props: SearchProps) => {
       }
 
       setNotFound(true);
+    }
+
+    const decodedAddress = decodeAddress(query);
+    if (decodedAddress) {
+      return `/account/${decodedAddress}`;
     }
 
     setSearchByName(true);
