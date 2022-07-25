@@ -1,6 +1,20 @@
 {
   "archives": [
     {
+      "network": "hydradx",
+      "providers": [
+        {
+          "provider": "subsquid",
+          "dataSourceUrl": "https://hydradx.archive.subsquid.io/graphql",
+          "explorerUrl": "https://hydradx.explorer.subsquid.io/graphql",
+          "release": "FireSquid",
+          "image": "substrate-ingest",
+          "gateway": "archive-gateway"
+        }
+      ],
+      "genesisHash": "0xafdc188f45c71dacbaa0b62e16a91f726c7b8699a9748cdf715459de6b7f366d"
+    },
+    {
       "network": "basilisk",
       "providers": [
         {
