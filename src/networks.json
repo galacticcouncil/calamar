@@ -172,6 +172,22 @@
         "coinGeckoId": "hydradx"
     },
     {
+        "name": "hydradx-rococo",
+        "displayName": "HydraDX Testnet",
+        "icon": "/assets/network-icons/hydradx.svg",
+        "color": "#f653a2",
+        "website": "https://hydradx.io/",
+        "parachainId": 2034,
+        "relayChain": "rococo",
+        "prefix": 63,
+        "decimals": 12,
+        "symbol": "HDX",
+        "squids": {
+            "archive": "https://hydradx-rococo-firesquid.play.hydration.cloud/graphql"
+        },
+        "coinGeckoId": "hydradx"
+    },
+    {
         "name": "interlay",
         "displayName": "Interlay",
         "icon": "/assets/network-icons/interlay.svg",
