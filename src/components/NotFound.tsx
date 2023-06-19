@@ -1,20 +1,18 @@
-import React, { PropsWithChildren } from "react";
-import styled from "@emotion/styled";
+/** @jsxImportSource @emotion/react */
+import { HTMLAttributes } from "react";
+import { css } from "@emotion/react";
 
-const MessageBox = styled.div`
-  padding: 16px 0;
-  text-align: center;
-  line-height: 54px;
+const notFoundMessageStyle = css`
+	padding: 16px 0;
+	text-align: center;
 `;
 
-export type NotFoundProps = {
-  message: string;
-};
+export type NotFoundProps = HTMLAttributes<HTMLDivElement>;
 
-const NotFound = (props: PropsWithChildren<{}>) => {
-  const { children } = props;
+const NotFound = (props: NotFoundProps) => {
+	const {children, ...divProps} = props;
 
-  return <MessageBox>{children}</MessageBox>;
+	return <div css={notFoundMessageStyle} data-test="not-found" {...divProps}>{children}</div>;
 };
 
 export default NotFound;

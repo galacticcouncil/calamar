@@ -1,113 +1,183 @@
-import React, { FormHTMLAttributes, useCallback, useEffect } from "react";
+/** @jsxImportSource @emotion/react */
+import { FormHTMLAttributes, useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, FormGroup, TextField } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import styled from "@emotion/styled";
+import { css, Theme } from "@emotion/react";
+
 import NetworkSelect from "./NetworkSelect";
 
-const StyledTextField = styled(TextField)`
-  background-color: #f5f5f5;
-
-  .MuiInputBase-root {
-    font-family: "Open Sans", sans-serif !important;
-    border-radius: 8px 0 0 8px !important;
-  }
-
-  & label.Mui-focused {
-    color: #14a1c0;
-  }
-  & .MuiOutlinedInput-root {
-    &.Mui-focused fieldset {
-      border-color: #14a1c0;
-    }
-  }
+const formGroupStyle = css`
+	flex-direction: row;
+	justify-content: center;
+	flex-wrap: nowrap;
 `;
 
-const StyledButton = styled(Button)`
-  border-radius: 0px 8px 8px 0px !important;
-  border: 1px solid #d8545c !important;
-  background-color: #ff646d !important;
+const networkSelectStyle = (theme: Theme) => css`
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 
-  .text {
-    display: none;
-  }
+	&, &:hover, &.Mui-focused {
+		.MuiOutlinedInput-notchedOutline {
+			border-color: #c4cdd5;
+			border-right: none;
+		}
+	}
 
-  .MuiButton-startIcon {
-    margin: 0;
-  }
+	&::after {
+		position: absolute;
+		right: 0;
+		content: '';
+		display: block;
+		width: 1px;
+		height: 24px;
+		background-color: #c4cdd5;
+		z-index: 10;
+	}
 
-  @media (min-width: 720px) {
-    width: 150px !important;
+	${theme.breakpoints.down("sm")} {
+		.MuiListItemIcon-root {
+			min-width: 0;
+		}
 
-    .text {
-      display: inline-block;
-    }
+		.MuiListItemText-root {
+			display: none;
+		}
+	}
+`;
 
-    .MuiButton-startIcon {
-      display: none;
-    }
-  }
+const textFieldStyle = css`
+	.MuiInputBase-root {
+		border-radius: 0;
+
+		.MuiOutlinedInput-notchedOutline {
+			border-left: none;
+		}
+
+		&, &:hover, &.Mui-focused {
+			.MuiOutlinedInput-notchedOutline {
+				border-color: #c4cdd5;
+				border-right: none;
+			}
+		}
+	}
+`;
+
+const buttonStyle = (theme: Theme) => css`
+	border-radius: 8px;
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	border: 1px solid ${theme.palette.primary.dark};
+
+	.MuiButton-startIcon {
+		display: none;
+		margin: 0;
+
+		svg {
+			font-size: 28px;
+		}
+	}
+
+	${theme.breakpoints.down("md")} {
+		padding-left: 16px;
+		padding-right: 16px;
+
+		.text {
+			display: none;
+		}
+
+		.MuiButton-startIcon {
+			display: flex;
+		}
+	}
 `;
 
 export type SearchInputProps = FormHTMLAttributes<HTMLFormElement> & {
-  network: string | undefined;
+	defaultNetwork?: string;
+	persistNetwork?: boolean;
+	onNetworkChange?: (network?: string) => void;
 };
 
 function SearchInput(props: SearchInputProps) {
-  const { network } = props;
+	const { defaultNetwork, persistNetwork, onNetworkChange, ...restProps } = props;
 
-  const [qs] = useSearchParams();
-  const query = qs.get("query");
-  console.log(qs, query);
+	console.log("default network", defaultNetwork);
 
-  const [search, setSearch] = React.useState<string>(query || "");
+	const [qs] = useSearchParams();
+	const query = qs.get("query");
+	console.log(qs, query);
 
-  const navigate = useNavigate();
+	const [network, setNetwork] = useState<string | undefined>(defaultNetwork);
+	const [search, setSearch] = useState<string>(query || "");
 
-  const handleSubmit = useCallback(
-    (e: any) => {
-      if (!network) {
-        return;
-      }
+	const navigate = useNavigate();
 
-      e.preventDefault();
-      localStorage.setItem("network", network);
-      navigate(`/${network}/search?query=${search}`);
-    },
-    [navigate, network, search]
-  );
+	const handleNetworkSelect = useCallback((network: string, isUserAction: boolean) => {
+		if (isUserAction && persistNetwork) {
+			console.log("store", network);
+			localStorage.setItem("network", network);
+		}
 
-  return (
-    <form {...props} onSubmit={handleSubmit}>
-      <FormGroup
-        row
-        style={{
-          flexDirection: "row",
-          justifyContent: "center",
-          flexWrap: "nowrap",
-        }}
-      >
-        <StyledTextField
-          fullWidth
-          id="search"
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Extrinsic hash / account address / block hash / block height / extrinsic name / event name"
-          value={search}
-          variant="outlined"
-        />
-        <StyledButton
-          className="calamar-button"
-          disableElevation
-          onClick={handleSubmit}
-          startIcon={<SearchIcon />}
-          type="submit"
-          variant="contained"
-        >
-          <span className="text">Search</span>
-        </StyledButton>
-      </FormGroup>
-    </form>
-  );
+		setNetwork(network);
+	}, [persistNetwork]);
+
+	const handleSubmit = useCallback(
+		(e: any) => {
+			if (!network) {
+				return;
+			}
+
+			e.preventDefault();
+			localStorage.setItem("network", network);
+			navigate(`/${network}/search?query=${search}`);
+		},
+		[navigate, network, search]
+	);
+
+	useEffect(() => {
+		setSearch(query || "");
+	}, [query]);
+
+	useEffect(() => {
+		if (persistNetwork) {
+			const network = localStorage.getItem("network");
+			network && setNetwork(network);
+		}
+	}, [persistNetwork]);
+
+	useEffect(() => {
+		onNetworkChange?.(network);
+	}, [onNetworkChange, network]);
+
+	return (
+		<form {...restProps} onSubmit={handleSubmit}>
+			<FormGroup row css={formGroupStyle}>
+				<NetworkSelect
+					css={networkSelectStyle}
+					onChange={handleNetworkSelect}
+					value={network}
+				/>
+				<TextField
+					css={textFieldStyle}
+					fullWidth
+					id="search"
+					onChange={(e) => setSearch(e.target.value)}
+					placeholder="Extrinsic hash / account address / block hash / block height / extrinsic name / event name"
+					value={search}
+				/>
+				<Button
+					css={buttonStyle}
+					onClick={handleSubmit}
+					startIcon={<SearchIcon />}
+					type="submit"
+					variant="contained"
+					color="primary"
+				>
+					<span className="text">Search</span>
+				</Button>
+			</FormGroup>
+		</form>
+	);
 }
 
 export default SearchInput;

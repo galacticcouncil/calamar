@@ -1,128 +1,88 @@
-import React, { useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { TableBody, TableCell, TableRow, Tooltip } from "@mui/material";
-import {
-  convertTimestampToTimeFromNow,
-  formatDate,
-} from "../utils/convertTimestampToTimeFromNow";
-import { useBlock } from "../hooks/useBlock";
-import { useExtrinsics } from "../hooks/useExtrinsics";
-import ExtrinsicsTable from "../components/extrinsics/ExtrinsicsTable";
-import ResultLayout from "../components/ResultLayout";
-import CopyToClipboardButton from "../components/CopyToClipboardButton";
-import InfoTable from "../components/InfoTable";
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 
-type BlockPageParams = {
-  network: string;
-  id: string;
+import { BlockInfoTable } from "../components/blocks/BlockInfoTable";
+import { CallsTable } from "../components/calls/CallsTable";
+import { Card, CardHeader } from "../components/Card";
+import CopyToClipboardButton from "../components/CopyToClipboardButton";
+import ExtrinsicsTable from "../components/extrinsics/ExtrinsicsTable";
+import { TabbedContent, TabPane } from "../components/TabbedContent";
+import EventsTable from "../components/events/EventsTable";
+import { useBlock } from "../hooks/useBlock";
+import { useCalls } from "../hooks/useCalls";
+import { useEvents } from "../hooks/useEvents";
+import { useExtrinsics } from "../hooks/useExtrinsics";
+import { useDOMEventTrigger } from "../hooks/useDOMEventTrigger";
+import { useRootLoaderData } from "../hooks/useRootLoaderData";
+
+export type BlockPageParams = {
+	id: string;
 };
 
-function BlockPage() {
-  let { network, id } = useParams() as BlockPageParams;
+export const BlockPage = () => {
+	const { network } = useRootLoaderData();
+	const { id } = useParams() as BlockPageParams;
 
-  const [block, { loading }] = useBlock(network, { id_eq: id });
+	const block = useBlock(network.name, { id_eq: id });
 
-  const extrinsics = useExtrinsics(
-    network,
-    { block: { id_eq: id } },
-    "id_DESC"
-  );
+	const extrinsics = useExtrinsics(network.name, { blockId_eq: id }, "id_DESC");
+	const events = useEvents(network.name, { blockId_eq: id }, "id_DESC");
+	const calls = useCalls(network.name, { blockId_eq: id }, "id_DESC");
 
-  useEffect(() => {
-    if (extrinsics.pagination.offset === 0) {
-      const interval = setInterval(extrinsics.refetch, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [extrinsics]);
+	useDOMEventTrigger("data-loaded", !block.loading && !extrinsics.loading && !events.loading && !calls.loading);
 
-  return (
-    <>
-      <div className="calamar-card">
-        <div className="calamar-table-header" style={{ paddingBottom: 48 }}>
-          Block #{id}
-        </div>
-        <InfoTable
-          item={block}
-          loading={loading}
-          noItemMessage="No block found"
-        >
-          {block && (
-            <TableBody>
-              <TableRow>
-                <TableCell>Id</TableCell>
-                <TableCell>{block.id}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Hash</TableCell>
-                <TableCell>
-                  {block.hash}
-                  <span style={{ marginLeft: 8 }}>
-                    <CopyToClipboardButton value={block.hash} />
-                  </span>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Parent hash</TableCell>
-                <TableCell>
-                  <Link to={`/${network}/search?query=${block.parentHash}`}>
-                    {block.parentHash}
-                  </Link>
-                  <span style={{ marginLeft: 8 }}>
-                    <CopyToClipboardButton value={block.parentHash} />
-                  </span>
-                </TableCell>
-              </TableRow>
-              {block.validator && (
-                <TableRow>
-                  <TableCell>Validator</TableCell>
-                  <TableCell>
-                    {block.validator}
-                    <span style={{ marginLeft: 8 }}>
-                      <CopyToClipboardButton value={block.validator} />
-                    </span>
-                  </TableCell>
-                </TableRow>
-              )}
-              <TableRow>
-                <TableCell>Block height</TableCell>
-                <TableCell>{block.height}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>
-                  <Tooltip
-                    arrow
-                    placement="top"
-                    title={formatDate(block.timestamp)}
-                  >
-                    <span>
-                      {convertTimestampToTimeFromNow(block.timestamp)}
-                    </span>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          )}
-        </InfoTable>
-      </div>
-      {block && (
-        <div
-          className="calamar-card"
-          style={{ marginTop: 16, marginBottom: 16 }}
-        >
-          <div className="calamar-table-header" style={{ paddingBottom: 48 }}>
-            Extrinsics
-          </div>
-          <ExtrinsicsTable
-            items={extrinsics.items}
-            loading={extrinsics.loading}
-            network={network}
-            pagination={extrinsics.pagination}
-          />
-        </div>
-      )}
-    </>
-  );
-}
+	useEffect(() => {
+		if (extrinsics.pagination.offset === 0) {
+			const interval = setInterval(extrinsics.refetch, 3000);
+			return () => clearInterval(interval);
+		}
+	}, [extrinsics]);
 
-export default BlockPage;
+	return (
+		<>
+			<Card>
+				<CardHeader>
+					Block #{id}
+					<CopyToClipboardButton value={id} />
+				</CardHeader>
+				<BlockInfoTable
+					network={network.name}
+					block={block}
+				/>
+			</Card>
+			{block.data &&
+				<Card>
+					<TabbedContent>
+						<TabPane
+							label="Extrinsics"
+							count={extrinsics.pagination.totalCount}
+							loading={extrinsics.loading}
+							error={extrinsics.error}
+							value="extrinsics"
+						>
+							<ExtrinsicsTable network={network.name} extrinsics={extrinsics} showAccount />
+						</TabPane>
+						<TabPane
+							label="Calls"
+							count={calls.pagination.totalCount}
+							loading={calls.loading}
+							error={calls.error}
+							value="calls"
+						>
+							<CallsTable network={network.name} calls={calls} showAccount />
+						</TabPane>
+						<TabPane
+							label="Events"
+							count={events.pagination.totalCount}
+							loading={events.loading}
+							error={events.error}
+							value="events"
+						>
+							<EventsTable network={network.name} events={events} showExtrinsic />
+						</TabPane>
+					</TabbedContent>
+				</Card>
+			}
+		</>
+	);
+};

@@ -1,19 +1,18 @@
-import React from "react";
-import styled from "@emotion/styled";
+/** @jsxImportSource @emotion/react */
+import { css } from "@emotion/react";
 
 import Spinner from "./Spinner";
 
-const LoadingBox = styled.div`
-  padding: 16px 0;
-  text-align: center;
+const loadingStyle = css`
+	text-align: center;
 `;
 
 const Loading = () => {
-  return (
-    <LoadingBox>
-      <Spinner />
-    </LoadingBox>
-  );
+	return (
+		<div css={loadingStyle}>
+			<Spinner />
+		</div>
+	);
 };
 
 export default Loading;

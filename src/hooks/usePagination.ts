@@ -1,64 +1,60 @@
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export type PaginationState = {
-  limit: number;
-  offset: number;
-  hasNext: boolean;
+	limit: number;
+	offset: number;
+	hasNextPage: boolean;
+	totalCount?: number
 };
 
 export type Pagination = PaginationState & {
-  setPreviousPage: () => void;
-  setNextPage: () => void;
-  setHasNext: (hasNext: boolean) => void;
+	set: (pagination: Partial<PaginationState>) => void;
+	setPreviousPage: () => void;
+	setNextPage: () => void;
 };
 
 export type UsePaginationProps = {
-  limit?: number;
+	limit?: number;
 };
 
-export function usePagination(limit: number = 10, hasNext: boolean = false) {
-  const [pagination, setPagination] = useState<PaginationState>({
-    limit,
-    offset: 0,
-    hasNext,
-  });
+export function usePagination(limit = 10) {
+	const [state, setState] = useState<PaginationState>({
+		limit,
+		offset: 0,
+		hasNextPage: false,
+	});
 
-  const setPreviousPage = useCallback(() => {
-    if (pagination.offset === 0) {
-      return;
-    }
-    setPagination({
-      ...pagination,
-      offset: pagination.offset - pagination.limit,
-    });
-  }, [pagination]);
+	const setPreviousPage = useCallback(() => {
+		if (state.offset === 0) {
+			return;
+		}
+		setState({
+			...state,
+			offset: state.offset - state.limit,
+		});
+	}, [state]);
 
-  const setNextPage = useCallback(() => {
-    setPagination({
-      ...pagination,
-      offset: pagination.offset + pagination.limit,
-    });
-  }, [pagination]);
+	const setNextPage = useCallback(() => {
+		setState({
+			...state,
+			offset: state.offset + state.limit,
+		});
+	}, [state]);
 
-  const setHasNext = useCallback(
-    (hasNext: boolean) => {
-      hasNext !== pagination.hasNext &&
-        setPagination({
-          ...pagination,
-          hasNext,
-        });
-    },
-    [pagination]
-  );
+	const set = useCallback((newState: Partial<Pagination>) => {
+		setState({
+			...state,
+			...newState
+		});
+	}, [state]);
 
-  return useMemo(
-    () =>
-      ({
-        ...pagination,
-        setPreviousPage,
-        setNextPage,
-        setHasNext,
-      } as Pagination),
-    [pagination, setPreviousPage, setNextPage, setHasNext]
-  );
+	return useMemo(
+		() => ({
+			...state,
+			set,
+			setPreviousPage,
+			setNextPage,
+		} as Pagination),
+		[state, setPreviousPage, setNextPage, setState]
+	);
 }

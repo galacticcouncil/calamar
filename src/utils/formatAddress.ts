@@ -1,34 +1,37 @@
-import ss58Registry from "../ss58-registry.json";
 import Keyring from "@polkadot/keyring";
-import arrayBufferToHex from "array-buffer-to-hex";
-
-const getPrefix = (network: string) => {
-  return ss58Registry.registry.find((r) => r.network === network)?.prefix;
-};
+import { ethereumEncode } from "@polkadot/util-crypto";
+import { hexToU8a, isHex, u8aToHex } from "@polkadot/util";
 
 export function decodeAddress(address: string) {
-  try {
-    const keyring = new Keyring();
-    const decodedAccountAddressArray = keyring.decodeAddress(address);
-    return "0x" + arrayBufferToHex(decodedAccountAddressArray);
-  } catch (e) {
-    console.log(e);
-  }
+	try {
+		const keyring = new Keyring();
+		address = u8aToHex(keyring.decodeAddress(address));
+	} catch (e) {
+		console.warn(e);
+	}
+
+	return address;
 }
 
 export function encodeAddress(
-  network: string,
-  address: string,
-  prefix?: number
+	address: string,
+	prefix: number
 ) {
-  prefix = prefix || getPrefix(network);
+	try {
+		const keyring = new Keyring();
 
-  if (prefix !== undefined) {
-    try {
-      const keyring = new Keyring();
-      return keyring.encodeAddress(address, prefix);
-    } catch (e) {
-      console.log(e);
-    }
-  }
+		const u8a = isHex(address)
+			? hexToU8a(address)
+			: keyring.decodeAddress(address);
+
+		if (u8a.length === 20) {
+			address = ethereumEncode(u8a);
+		} else {
+			address = keyring.encodeAddress(u8a, prefix);
+		}
+	} catch (e) {
+		console.warn(e);
+	}
+
+	return address;
 }

@@ -1,156 +1,191 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, Outlet, useParams } from "react-router-dom";
-import styled from "@emotion/styled";
+/** @jsxImportSource @emotion/react */
+import { Outlet, useLoaderData } from "react-router-dom";
+import { css, Theme } from "@emotion/react";
 
 import Background from "../assets/detail-page-bgr.svg";
 import { ReactComponent as Logo } from "../assets/calamar-logo-export-02.svg";
 
-import { getArchive } from "../services/archivesService";
-import NotFoundPage from "../screens/notFound";
+import { Network } from "../model/network";
 
-import NetworkSelect from "./NetworkSelect";
+import { NotFoundPage } from "../screens/notFound";
+
 import SearchInput from "./SearchInput";
+import { Link } from "./Link";
+import { Footer } from "./Footer";
 
-const StyledTopBar = styled.div`
-  position: fixed;
-  top: 0;
-  padding: 16px;
-  width: 100%;
-  min-height: 130px;
-  box-sizing: border-box;
-  background-color: white;
+const containerStyle = (theme: Theme) => css`
+	--content-wrapper-min-height: 450px;
 
-  > .top-bar-content {
-    max-width: 1500px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 
-    > .top-bar-first-row,
-    > .top-bar-second-row {
-      flex: 1 1 auto;
-    }
+	${theme.breakpoints.up("sm")} {
+		--content-wrapper-min-height: 500px;
+	}
 
-    > .top-bar-first-row {
-      display: flex;
-      align-items: center;
-    }
-  }
+	${theme.breakpoints.up("md")} {
+		--content-wrapper-min-height: 600px;
+	}
 
-  .logo {
-    margin-right: auto;
+	${theme.breakpoints.up("lg")} {
+		--content-wrapper-min-height: 750px;
+	}
 
-    > svg {
-      width: 160px;
-    }
-  }
-
-  @media (min-width: 900px) {
-    padding: 24px 32px;
-    padding-bottom: 0;
-
-    > .top-bar-content {
-      flex-direction: row;
-      align-items: center;
-
-      > .top-bar-second-row {
-        .MuiTextField-root {
-          .MuiInputBase-root {
-            border-radius: 0px !important;
-          }
-        }
-      }
-    }
-
-    .logo {
-      > svg {
-        width: 250px;
-      }
-    }
-  }
+	${theme.breakpoints.up("xl")} {
+		--content-wrapper-min-height: 1250px;
+	}
 `;
 
-const StyledContent = styled.div`
-  position: absolute;
-  top: 170px;
-  padding: 0 16px;
-  width: 100%;
-  box-sizing: border-box;
+const backgroundStyle = css`
+	position: absolute;
+	left: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	min-height: 100vh;
+	z-index: -1;
 
-  @media (min-width: 900px) {
-    padding: 0 32px;
-  }
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: var(--content-wrapper-min-height);
+		background-color: white;
+		background-position: center bottom;
+		background-size: 100% auto;
+		background-repeat: no-repeat;
+		background-image: url(${Background});
+	}
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: var(--content-wrapper-min-height);
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #def9fb;
+	}
 `;
 
-const StyledNetworkSelect = styled(NetworkSelect)`
-  height: auto;
-  font-size: 16px !important;
+const topBarStyle = (theme: Theme) => css`
+	position: relative;
+	top: 0;
+	padding: 16px;
+	margin: 0 -16px;
+	margin-top: -16px;
+	min-height: 130px;
+	box-sizing: border-box;
+	z-index: 1000;
 
-  .MuiSelect-select {
-    padding: 8.5px 14px;
-  }
+	flex: 0 0 auto;
 
-  @media (min-width: 900px) {
-    height: 56px;
-    border-radius: 8px 0px 0px 8px !important;
-  }
+	${theme.breakpoints.up("md")} {
+		margin: 0 -32px;
+		margin-top: -24px;
+		padding: 0 32px;
+		padding-top: 24px;
+	}
 `;
 
-type ResultLayoutParams = {
-  network: string;
+const topBarContentStyle = (theme: Theme) => css`
+	max-width: 1500px;
+	margin: auto;
+	display: flex;
+	flex-direction: column;
+
+	${theme.breakpoints.up("md")} {
+		flex-direction: row;
+		align-items: center;
+	}
+`;
+
+const topBarRowStyle = css`
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+`;
+
+const contentWrapperStyle = (theme: Theme) => css`
+	position: relative;
+	padding: 16px;
+	width: 100%;
+	box-sizing: border-box;
+	flex: 1 1 auto;
+
+	min-height: var(--content-wrapper-min-height);
+
+	${theme.breakpoints.up("md")} {
+		padding: 24px 32px;
+	}
+`;
+
+const contentStyle = css`
+	max-width: 1500px;
+	margin: auto;
+	margin-top: 40px;
+`;
+
+const logoStyle = (theme: Theme) => css`
+	margin-right: auto;
+
+	> svg {
+		display: block;
+		width: 250px;
+	}
+
+	${theme.breakpoints.down("md")} {
+		margin-bottom: 12px;
+
+		> svg {
+			width: 160px;
+		}
+	}
+`;
+
+const searchInputStyle = css`
+	width: 100%;
+	flex: 1 1 auto;
+`;
+
+const footerStyle = css`
+	> div {
+		max-width: 1500px;
+	}
+`;
+
+export type ResultLayoutLoaderData = {
+	network?: Network;
 };
 
-function ResultLayout() {
-  const { network: networkParam } = useParams() as ResultLayoutParams;
+export const ResultLayout = () => {
+	const {network} = useLoaderData() as ResultLayoutLoaderData;
 
-  const [network, setNetwork] = useState<string | undefined>(networkParam);
-
-  const networkIsValid = useMemo(
-    () => Boolean(getArchive(networkParam)),
-    [networkParam]
-  );
-
-  useEffect(() => {
-    setNetwork(networkParam);
-  }, [networkParam]);
-
-  console.log("NNN", network);
-
-  return (
-    <>
-      <div
-        style={{
-          width: "100vw",
-          height: "100vh",
-          backgroundPosition: "center bottom",
-          backgroundSize: "contain",
-          backgroundRepeat: "no-repeat",
-          backgroundImage: `url(${Background})`,
-          margin: 0,
-          position: "fixed",
-        }}
-      />
-      <StyledContent>
-        <div style={{ maxWidth: "1500px", margin: "auto" }}>
-          {networkIsValid && <Outlet />}
-          {!networkIsValid && <NotFoundPage />}
-        </div>
-      </StyledContent>
-      <StyledTopBar>
-        <div className="top-bar-content">
-          <div className="top-bar-first-row">
-            <Link className="logo" to="/">
-              <Logo />
-            </Link>
-            <StyledNetworkSelect onChange={setNetwork} value={network} />
-          </div>
-          <div className="top-bar-second-row">
-            <SearchInput network={network} />
-          </div>
-        </div>
-      </StyledTopBar>
-    </>
-  );
-}
-
-export default ResultLayout;
+	return (
+		<div css={containerStyle}>
+			<div css={backgroundStyle} data-test="background" />
+			<div css={contentWrapperStyle}>
+				<div css={topBarStyle} data-test="top-bar">
+					<div css={topBarContentStyle}>
+						<div css={topBarRowStyle}>
+							<Link css={logoStyle} to="/">
+								<Logo />
+							</Link>
+						</div>
+						<div css={topBarRowStyle}>
+							<SearchInput css={searchInputStyle} defaultNetwork={network?.name} key={network?.name} />
+						</div>
+					</div>
+				</div>
+				<div css={contentStyle}>
+					{network && <Outlet />}
+					{!network && <NotFoundPage />}
+				</div>
+			</div>
+			<Footer css={footerStyle} />
+		</div>
+	);
+};

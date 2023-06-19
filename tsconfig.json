@@ -18,9 +18,18 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "jsxImportSource": "@emotion/react",
+    "noUncheckedIndexedAccess": true
   },
   "include": [
-    "src"
-  ]
+    "src",
+    "scripts"
+  ],
+  "ts-node": {
+    "compilerOptions": {
+      "target": "es2020",
+      "module": "CommonJS"
+    }
+  }
 }

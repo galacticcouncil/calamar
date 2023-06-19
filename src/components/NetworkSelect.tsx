@@ -1,65 +1,92 @@
-import React, { useCallback, useEffect } from "react";
-import { MenuItem, Select, SelectProps } from "@mui/material";
-import styled from "@emotion/styled";
-import cx from "classnames";
+/** @jsxImportSource @emotion/react */
+import { useCallback, useEffect } from "react";
+import { Divider, ListItemIcon, ListItemText, ListSubheader, MenuItem, Select, SelectProps } from "@mui/material";
+import { css } from "@emotion/react";
 
-import { useArchives } from "../hooks/useArchives";
+import { useNetworks } from "../hooks/useNetworks";
+import { useNetworkGroups } from "../hooks/useNetworkGroups";
 
-const StyledSelect = styled(Select)`
-  border-radius: 8px !important;
-  overflow: hidden;
+const selectStyle = css`
+	&.MuiInputBase-root {
+		.MuiSelect-select {
+			display: flex;
+			align-items: center;
+			padding-left: 16px;
+		}
+	}
 
-  background-color: #61dafb !important;
-  border-color: #14a1c0;
-  text-transform: capitalize !important;
+	.MuiListItemIcon-root {
+		min-width: 36px;
 
-  & .MuiOutlinedInput-root {
-    &.Mui-focused fieldset {
-      border-color: #14a1c0;
-    }
-  }
+		img {
+			width: 24px;
+			height: 24px;
+		}
+	}
+
+`;
+
+const iconStyle = css`
+	width: 20px;
+	height: 20px;
+
+	border-radius: 0px;
 `;
 
 type NetworkSelectProps = Omit<SelectProps, "value" | "onChange"> & {
-  value?: string;
-  onChange?: (value: string, isUserAction: boolean) => void;
+	value?: string;
+	onChange?: (value: string, isUserAction: boolean) => void;
 };
 
 const NetworkSelect = (props: NetworkSelectProps) => {
-  const { value, onChange, ...selectProps } = props;
+	const { value, onChange, ...selectProps } = props;
 
-  const archives = useArchives();
+	const networks = useNetworks();
 
-  useEffect(() => {
-    const archive = archives.find((it) => it.network === value);
+	const networkGroups = useNetworkGroups();
 
-    if (!archive && onChange && archives.length > 0) {
-      onChange(archives[0].network, false);
-    }
-  }, [value, onChange, archives]);
+	useEffect(() => {
+		const network = networks.find((it) => it.name === value);
 
-  const handleArchiveChange = useCallback(
-    (e: any) => {
-      onChange && onChange(e.target.value, true);
-    },
-    [onChange]
-  );
+		if (!network && onChange && networks.length > 0) {
+			onChange(networkGroups[0]!.networks[0]!.name, false);
+		}
+	}, [value, onChange, networkGroups]);
 
-  return (
-    <StyledSelect
-      {...selectProps}
-      className={cx("calamar-button", props.className)}
-      onChange={handleArchiveChange}
-      //size="small"
-      value={value || ""}
-    >
-      {archives.map((archive) => (
-        <MenuItem key={archive.network} value={archive.network}>
-          {archive.network}
-        </MenuItem>
-      ))}
-    </StyledSelect>
-  );
+	const handleNetworkChange = useCallback(
+		(e: any) => {
+			onChange && onChange(e.target.value, true);
+		},
+		[onChange]
+	);
+
+	return (
+		<Select
+			{...selectProps}
+			onChange={handleNetworkChange}
+			value={value || ""}
+			css={selectStyle}
+		>
+			{networkGroups.map((group, index) => [
+				index > 0 && <Divider />,
+				<ListSubheader key={index}>
+					{group.relayChainNetwork?.displayName || "Other"}
+					{group.relayChainNetwork && <span> and parachains</span>}
+				</ListSubheader>,
+				...group.networks.map((network) => (
+					<MenuItem key={network.name} value={network.name}>
+						<ListItemIcon>
+							<img
+								src={network.icon}
+								css={iconStyle}
+							/>
+						</ListItemIcon>
+						<ListItemText>{network.displayName}</ListItemText>
+					</MenuItem>
+				))
+			])}
+		</Select>
+	);
 };
 
 export default NetworkSelect;

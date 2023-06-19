@@ -1,29 +1,29 @@
-import { getArchive } from "../services/archivesService";
+import { DataError } from "./error";
 
-export async function fetchGraphql(
-  network: string,
-  query: string,
-  variables: object = {}
-) {
-  const archive = getArchive(network);
+export async function fetchGraphql<T = any>(
+	url: string,
+	query: string,
+	variables: object = {}
+): Promise<T> {
+	const response = await fetch(url, {
+		method: "POST",
 
-  if (!archive) {
-    throw new Error(`Archive for network '${network} not found`);
-  }
+		headers: {
+			"Content-Type": "application/json",
+		},
 
-  let results = await fetch(archive.providers[0].explorerUrl, {
-    method: "POST",
+		body: JSON.stringify({
+			query,
+			variables,
+		}),
+	});
 
-    headers: {
-      "Content-Type": "application/json",
-    },
+	const jsonResult = await response.json();
 
-    body: JSON.stringify({
-      query,
-      variables,
-    }),
-  });
+	if (jsonResult.errors && !jsonResult.data) {
+		const error = jsonResult.errors[0];
+		throw new DataError(error.message);
+	}
 
-  let jsonResult = await results.json();
-  return jsonResult.data;
+	return jsonResult.data;
 }

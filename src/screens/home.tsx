@@ -1,101 +1,239 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import styled from "@emotion/styled";
+/** @jsxImportSource @emotion/react */
+import { css, Theme } from "@emotion/react";
 
 import { ReactComponent as Logo } from "../assets/calamar-logo-export-05.svg";
 import Background from "../assets/main-screen-bgr.svg";
 
-import NetworkSelect from "../components/NetworkSelect";
 import SearchInput from "../components/SearchInput";
+import { Footer } from "../components/Footer";
+import { Card } from "../components/Card";
+import { ButtonLink } from "../components/ButtonLink";
+import { useNetworkGroups } from "../hooks/useNetworkGroups";
 
-const StyledSearchBox = styled.div`
-  margin: auto;
-  max-width: 1000px;
-  padding-left: 16px;
-  padding-right: 16px;
-  text-align: center;
+const containerStyle = (theme: Theme) => css`
+	--content-min-height: 900px;
 
-  @media (min-width: 900px) {
-    display: flex;
-    justify-content: center;
-  }
+	width: 100%;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+
+	${theme.breakpoints.up("sm")} {
+		--content-min-height: 1000px;
+	}
+
+	${theme.breakpoints.up("md")} {
+		--content-min-height: 1100px;
+	}
+
+	${theme.breakpoints.up("lg")} {
+		--content-min-height: 1200px;
+	}
+
+	${theme.breakpoints.up("xl")} {
+		--content-min-height: 1300px;
+	}
 `;
 
-const StyledNetworkSelect = styled(NetworkSelect)`
-  height: auto;
-  font-size: 16px !important;
-  margin-bottom: 16px;
-
-  .MuiSelect-select {
-    padding: 8.5px 14px;
-  }
-
-  @media (min-width: 900px) {
-    height: 56px;
-    border-radius: 8px 0px 0px 8px !important;
-  }
+const contentStyle = css`
+	position: relative;
+	flex: 1 1 auto;
+	min-height: var(--content-min-height);
 `;
 
-const StyledSearchInput = styled(SearchInput)`
-  @media (min-width: 900px) {
-    flex: 1 1 auto;
+const backgroundStyle = css`
+	position: absolute;
+	top: 0;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	min-height: 100vh;
+	z-index: -1;
 
-    .MuiTextField-root {
-      .MuiInputBase-root {
-        border-radius: 0px !important;
-      }
-    }
-  }
+	&::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: var(--content-min-height);
+		background-color: white;
+		background-position: center bottom;
+		background-size: 100% auto;
+		background-repeat: no-repeat;
+		background-image: url(${Background});
+	}
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: var(--content-min-height);
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #9af0f7;
+	}
 `;
 
-function HomePage() {
-  const [network, setNetwork] = useState<string | undefined>();
+const logoStyle = css`
+	width: 420px;
+	margin: 40px auto;
+	display: block;
+	max-width: 100%;
+`;
 
-  const handleNetworkSelect = useCallback(
-    (network: string, isUserAction: boolean) => {
-      if (isUserAction) {
-        localStorage.setItem("network", network);
-      }
+const subtitleStyle = (theme: Theme) => css`
+	position: relative;
+	top: -100px;
+	padding: 0 16px;
+	font-size: 16px;
+	text-align: center;
 
-      setNetwork(network);
-    },
-    []
-  );
+	${theme.breakpoints.down("sm")} {
+		top: -70px;
+	}
+`;
 
-  useEffect(() => {
-    let network = localStorage.getItem("network");
-    network && setNetwork(network);
-  }, []);
+const searchBoxStyle = css`
+	display: flex;
+	margin: auto;
+	max-width: 1000px;
+	padding-left: 16px;
+	padding-right: 16px;
+	text-align: center;
+	justify-content: center;
+`;
 
-  return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        backgroundPosition: "center bottom",
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundImage: `url(${Background})`,
-        margin: 0,
-      }}
-    >
-      <Logo
-        style={{
-          width: "500px",
-          margin: "auto",
-          display: "block",
-          maxWidth: "100%",
-        }}
-      />
-      <StyledSearchBox>
-        <StyledNetworkSelect onChange={handleNetworkSelect} value={network} />
-        <StyledSearchInput network={network} />
-      </StyledSearchBox>
-      <div style={{ margin: "auto", width: "fit-content", marginTop: 24 }}>
-        <Link to={`/${network}/latest-extrinsics`}>Show latest extrinsics</Link>
-      </div>
-    </div>
-  );
-}
+const searchInputStyle = (theme: Theme) => css`
+	flex: 1 1 auto;
 
-export default HomePage;
+	.MuiInputBase-root {
+		.MuiInputBase-input,
+		.MuiSelect-select {
+			padding: 16px 24px;
+		}
+	}
+
+	${theme.breakpoints.up("md")} {
+		.MuiButton-root {
+			padding-left: 52px;
+			padding-right: 52px;
+		}
+	}
+`;
+
+const networksStyle = css`
+	box-sizing: border-box;
+	max-width: 1032px;
+	margin: 0 auto;
+	margin-top: 64px;
+	margin-bottom: 48px;
+	padding: 0 16px;
+`;
+
+const networksGroupStyle = (theme: Theme) => css`
+	margin: 24px 0;
+	padding: 16px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, auto));
+	gap: 16px;
+
+	${theme.breakpoints.up("md")} {
+		padding: 16px;
+	}
+`;
+
+const newtorkGroupTitleStyle = css`
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	font-size: 18px;
+	font-weight: 700;
+	opacity: .75;
+
+	div {
+		font-size: 16px;
+		font-weight: 400;
+	}
+`;
+
+const networkButtonStyle = css`
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 16px;
+	line-height: normal;
+
+	font-size: 16px;
+	font-weight: 400;
+	text-decoration: none;
+
+	color: inherit;
+	background-color: #f5f5f5;
+	border-radius: 8px;
+
+	img {
+		width: 32px;
+		height: 32px;
+		object-fit: contain;
+		margin-right: 12px;
+		margin-left: 4px;
+	}
+
+	&[data-network=polkadot],
+	&[data-network=kusama] {
+		grid-row-start: 2;
+		grid-row-end: 4;
+	}
+`;
+
+const footerStyle = css`
+	flex: 0 0 auto;
+
+	> div {
+		max-width: 1000px;
+	}
+`;
+
+export const HomePage = () => {
+	const networkGroups = useNetworkGroups();
+
+	return (
+		<div css={containerStyle}>
+			<div css={backgroundStyle} data-test="background" />
+			<div css={contentStyle}>
+				<Logo css={logoStyle} />
+				<div css={subtitleStyle}>Block explorer for Polkadot & Kusama ecosystem</div>
+				<div css={searchBoxStyle}>
+					<SearchInput
+						css={searchInputStyle}
+						defaultNetwork={"polkadot"}
+						persistNetwork
+					/>
+				</div>
+				<div css={networksStyle}>
+					{networkGroups.map((group) =>
+						<Card css={networksGroupStyle} key={group.relayChainNetwork?.name || "other"}>
+							<div css={newtorkGroupTitleStyle}>
+								{group.relayChainNetwork?.displayName || "Other"}
+								{group.relayChainNetwork && <div>and parachains</div>}
+							</div>
+							{group.networks.map(network =>
+								network && (
+									<ButtonLink to={`/${network.name}`} key={network.name} css={networkButtonStyle} data-network={network.name}>
+										<img src={network.icon} />
+										{network.displayName}
+									</ButtonLink>
+								)
+							)}
+						</Card>
+					)}
+				</div>
+			</div>
+			<Footer css={footerStyle} />
+		</div>
+	);
+};
